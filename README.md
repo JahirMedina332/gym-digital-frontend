@@ -1,32 +1,20 @@
-# React + TypeScript + Vite
+# Gym Digital - Frontend UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interfaz de usuario responsiva y moderna para el sistema administrativo "Gym Digital". Construida con un enfoque en la experiencia del usuario y rendimiento mediante componentes modulares.
 
-Currently, two official plugins are available:
+##  Stack Tecnológico
+* **Core:** React 18 + TypeScript + Vite
+* **Estilos:** Tailwind CSS v4
+* **Componentes UI:** Base UI (shadcn/ui) + Lucide React
+* **Enrutamiento:** React Router DOM (Rutas Públicas y Privadas)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+##  Características
+* **Diseño 100% Responsivo:** Menú lateral (Sidebar) colapsable en escritorio y menú tipo "hamburguesa" animado en dispositivos móviles.
+* **Rutas Protegidas:** Implementación de "Protected Routes" que validan la existencia del JWT en el almacenamiento local antes de permitir el acceso al Dashboard.
+* **Integración de API:** Consumo de servicios RESTful y manejo de estados HTTP.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+##  Instalación y Uso
+1. Clonar el repositorio: `git clone https://github.com/JahirMedina332/gym-digital-frontend.git`
+2. Instalar dependencias: `npm install`
+3. Iniciar el servidor de desarrollo: `npm run dev`
+4. La aplicación estará disponible en `http://localhost:5174` (o el puerto asignado por Vite).

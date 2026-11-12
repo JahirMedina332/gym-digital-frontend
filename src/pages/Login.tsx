@@ -19,32 +19,52 @@ export default function Login() {
         setError("")
 
         try {
-            // Petición HTTP hacia tu backend en Spring Boot
-            // NOTA: Ajusta la ruta "/auth/login" si tu endpoint en Java es diferente
-            const response = await fetch("http://localhost:9525/api/auth/login", {
+            console.log("Intentando iniciar sesión con:", { email, password });
+
+            // 1. Petición real al backend
+            const response = await fetch("http://localhost:9525/api/auth/login",{
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email, password }),
-            })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+
+            // Extraemos lo que sea que responda el backend
+            const data = await response.json();
+            console.log("Respuesta exacta del backend:", data); // Este es nuestro "chismoso"
 
             if (!response.ok) {
-                throw new Error("Credenciales incorrectas")
+                throw new Error("Credenciales inválidas");
             }
 
-            const data = await response.json()
+            // 2. Extraer el token (cubre varios nombres comunes)
+            const tokenGenerado = data.token || data.jwt || data.accessToken;
 
-            // Guardamos el token JWT en el almacenamiento del navegador
-            // Ajusta "data.token" dependiendo de cómo tu backend envíe el JSON
-            localStorage.setItem("jwt_token", data.token)
+            if (!tokenGenerado) {
+                throw new Error("El backend respondió OK, pero no se encontró el token.");
+            }
 
-            // Redirigimos al usuario al Layout principal (Dashboard)
-            navigate("/")
+            // 3. Guardar el token en el almacenamiento local
+            localStorage.setItem("jwt_token", tokenGenerado);
 
-        } catch (err) {
+            // 4. Redirección inteligente basada en el rol
+            const payloadBase64 = tokenGenerado.split('.')[1];
+            const decodedPayload = JSON.parse(atob(payloadBase64));
+            const rolUsuario = decodedPayload.rol;
+
+            console.log("Rol detectado:", rolUsuario);
+
+            // El guardia de tráfico decide a dónde enviarte
+            if (rolUsuario === "ADMIN") {
+                navigate("/");
+            } else if (rolUsuario === "ENTRENADOR") {
+                navigate("/DashboardEntrenador");
+            } else {
+                navigate("/DashboardCliente");
+            }
+
+        } catch (err: any) {
             setError("Error al iniciar sesión. Verifica tus datos.")
-            console.error(err)
+            console.error("Detalle del error:", err.message)
         } finally {
             setIsLoading(false)
         }
@@ -66,7 +86,7 @@ export default function Login() {
                         <Input
                             id="email"
                             type="email"
-                            placeholder="admin@gymdigital.com"
+                            placeholder="usuario@gymdigital.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required

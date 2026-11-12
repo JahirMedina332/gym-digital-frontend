@@ -1,76 +1,110 @@
-// En React usamos "useState" para guardar el estado de la interfaz (ej: ¿el menú está abierto o cerrado?)
-import { useState } from "react"
-// Importamos los íconos de la librería Lucide (que instalamos al principio)
-import { Menu, Home, Calendar, Dumbbell } from "lucide-react"
-// Importamos los componentes de diseño de shadcn
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
-
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+    Home, Users, Dumbbell, IdCard, CalendarCheck,
+    LogOut, LayoutDashboard
+} from "lucide-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    // Esta variable controla si el menú de celular está visible (true) u oculto (false)
-    const [isOpen, setIsOpen] = useState(false)
+    const [rol, setRol] = useState<string>("");
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        const token = localStorage.getItem("jwt_token");
+        if (token) {
+            try {
+                // Decodificamos el token para saber qué rol tiene
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setRol(payload.rol); // Obtiene "ADMIN", "CLIENTE" o "ENTRENADOR"
+            } catch (e) {
+                console.error("Error al decodificar token", e);
+            }
+        }
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("jwt_token");
+        navigate("/login");
+    };
+
+    // 1. Opciones exclusivas para el ADMINISTRADOR
+    const adminLinks = [
+        { path: "/", label: "Inicio", icon: <Home className="w-5 h-5" /> },
+        { path: "/usuarios", label: "Usuarios", icon: <Users className="w-5 h-5" /> },
+        { path: "/clases", label: "Clases", icon: <Dumbbell className="w-5 h-5" /> },
+        { path: "/membresias", label: "Membresías", icon: <IdCard className="w-5 h-5" /> },
+        { path: "/reservas", label: "Reservas", icon: <CalendarCheck className="w-5 h-5" /> },
+    ];
+
+    // 2. Opciones exclusivas para el CLIENTE
+    const clienteLinks = [
+        { path: "/mi-panel", label: "Mi Panel", icon: <LayoutDashboard className="w-5 h-5" /> },
+    ];
+    // 3. Opciones exclusivas para el ENTRENADOR
+    const entrenadorLinks = [
+        { path: "/mi-horario", label: "Mi Horario", icon: <CalendarCheck className="w-5 h-5" /> },
+    ];
+
+    // Elegimos qué menú mostrar basándonos en el rol
+    let links = [];
+    if (rol === "ADMIN") {
+        links = adminLinks;
+    } else if (rol === "ENTRENADOR") {
+        links = entrenadorLinks;
+    } else {
+        links = clienteLinks; // Por defecto o si es CLIENTE
+    }
+
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
+        <div className="flex h-screen bg-gray-50 font-sans">
+            {/* Sidebar / Menú Lateral */}
+            <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between shadow-sm">
+                <div>
+                    {/* Logo */}
+                    <div className="h-16 flex items-center px-6 border-b border-gray-100">
+                        <span className="text-xl font-black text-blue-600 tracking-tight">Gym Digital</span>
+                    </div>
 
-            {/* 1. SIDEBAR PARA ESCRITORIO */}
-            {/* "hidden md:flex" es la magia responsiva de Tailwind:
-          Significa "ocúltalo por defecto (celulares), pero muéstralo si la pantalla es mediana o grande (md)". */}
-            <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card p-4">
-                <h2 className="text-2xl font-bold mb-8">Gym Digital</h2>
+                    {/* Enlaces de Navegación Dinámicos */}
+                    <nav className="p-4 space-y-1">
+                        {links.map((link) => {
+                            const isActive = location.pathname === link.path;
+                            return (
+                                <Link
+                                    key={link.path}
+                                    to={link.path}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm ${
+                                        isActive
+                                            ? "bg-blue-50 text-blue-700"
+                                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                    }`}
+                                >
+                                    {link.icon}
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </div>
 
-                <nav className="flex flex-col gap-2">
-                    {/* Los íconos en React se usan como si fueran etiquetas HTML */}
-                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors">
-                        <Home className="w-5 h-5" /> Inicio
-                    </a>
-                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors">
-                        <Dumbbell className="w-5 h-5" /> Clases
-                    </a>
-                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors">
-                        <Calendar className="w-5 h-5" /> Reservas
-                    </a>
-                </nav>
+                {/* Botón de Cerrar Sesión (Visible para todos) */}
+                <div className="p-4 border-t border-gray-100">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-colors font-medium text-sm text-red-600 hover:bg-red-50"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        Cerrar Sesión
+                    </button>
+                </div>
             </aside>
 
-            {/* 2. CONTENIDO PRINCIPAL */}
-            <main className="flex-1 flex flex-col">
-
-                {/* 3. BARRA SUPERIOR PARA CELULARES */}
-                {/* "md:hidden" significa "ocúltalo en pantallas grandes", por lo que solo se ve en celulares */}
-                <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card">
-                    <h2 className="text-xl font-bold">Gym Digital</h2>
-
-                    {/* Este es el componente que desliza el menú desde la izquierda */}
-                    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                        {/* Quitamos asChild y le damos los estilos de botón directamente al SheetTrigger */}
-                        <SheetTrigger className="inline-flex items-center justify-center rounded-md border border-border p-2 hover:bg-accent hover:text-accent-foreground transition-colors">
-                            <Menu className="w-5 h-5" />
-                        </SheetTrigger>
-                        <SheetContent side="left" className="w-64 p-4">
-                            <SheetTitle className="text-2xl font-bold mb-8">Gym Digital</SheetTitle>
-                            <nav className="flex flex-col gap-2">
-                                {/* Al hacer clic en un enlace, cambiamos el estado a "false" para que el menú se cierre solo */}
-                                <a href="#" className="flex items-center gap-3 p-2 hover:bg-accent rounded-md" onClick={() => setIsOpen(false)}>
-                                    <Home className="w-5 h-5" /> Inicio
-                                </a>
-                                <a href="#" className="flex items-center gap-3 p-2 hover:bg-accent rounded-md" onClick={() => setIsOpen(false)}>
-                                    <Dumbbell className="w-5 h-5" /> Clases
-                                </a>
-                                <a href="#" className="flex items-center gap-3 p-2 hover:bg-accent rounded-md" onClick={() => setIsOpen(false)}>
-                                    <Calendar className="w-5 h-5" /> Reservas
-                                </a>
-                            </nav>
-                        </SheetContent>
-                    </Sheet>
-                </header>
-
-                {/* 4. AQUÍ ENTRA EL CONTENIDO DINÁMICO DE App.tsx */}
-                <div className="p-8">
-                    {children}
-                </div>
+            {/* Contenido Principal (Las pantallas que ya creamos) */}
+            <main className="flex-1 overflow-y-auto p-8">
+                {children}
             </main>
-
         </div>
-    )
+    );
 }
